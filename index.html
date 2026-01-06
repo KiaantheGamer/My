@@ -10,18 +10,24 @@ body {
     font-family: Arial, sans-serif;
     background: #f5f5f5;
     text-align: center;
-    padding: 30px;
+    padding: 40px 20px;
+}
+h1 {
+    margin-bottom: 20px;
 }
 button {
-    padding: 12px 20px;
+    padding: 14px 28px;
     font-size: 18px;
-    border: none;
-    border-radius: 6px;
     background: #4CAF50;
     color: white;
+    border: none;
+    border-radius: 8px;
+}
+button:disabled {
+    background: #9ccc9c;
 }
 #result {
-    margin-top: 20px;
+    margin-top: 25px;
     font-size: 22px;
 }
 </style>
@@ -30,36 +36,46 @@ button {
 <body>
 
 <h1>Internet Speed Test</h1>
-<button onclick="startTest()">Start Test</button>
+<button id="btn" onclick="startTest()">Start Test</button>
 <div id="result"></div>
 
 <script>
 async function startTest() {
+    const btn = document.getElementById("btn");
     const result = document.getElementById("result");
+
+    btn.disabled = true;
     result.innerText = "Testing download speed...";
 
-    const url = "https://speed.hetzner.de/10MB.bin";
-    const start = performance.now();
+    const testURL = "https://speed.cloudflare.com/__down?bytes=8000000"; // 8MB
+    const startTime = performance.now();
 
     try {
-        const res = await fetch(url + "?x=" + Math.random());
-        const data = await res.arrayBuffer();
-        const end = performance.now();
+        const response = await fetch(testURL + "&cache=" + Math.random(), {
+            cache: "no-store"
+        });
 
-        const time = (end - start) / 1000;
+        const data = await response.arrayBuffer();
+        const endTime = performance.now();
+
+        const duration = (endTime - startTime) / 1000;
         const bits = data.byteLength * 8;
-        const speed = (bits / time / 1_000_000).toFixed(2);
+        const speedMbps = (bits / duration / 1_000_000).toFixed(2);
 
         result.innerHTML = `
-            <p>Download Speed: <b>${speed} Mbps</b></p>
+            <p><b>Download Speed</b></p>
+            <p style="font-size:32px">${speedMbps} Mbps</p>
             <p>Upload Speed: N/A</p>
             <p>Ping: N/A</p>
         `;
-    } catch (e) {
-        result.innerText = "Speed test failed.";
+    } catch (err) {
+        result.innerText = "Speed test failed. Network blocked.";
+        console.error(err);
     }
+
+    btn.disabled = false;
 }
 </script>
 
 </body>
-</html
+</html>
