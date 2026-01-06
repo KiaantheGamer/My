@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internet Speed Test</title>
+
+<!-- OpenSpeedTest official public client -->
+<script src="https://openspeedtest.com/speedtest.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    text-align: center;
+}
+h1 {
+    margin: 20px 0;
+}
+#speedtest {
+    max-width: 420px;
+    margin: auto;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Internet Speed Test</h1>
+<div id="speedtest"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    OpenSpeedTest.Start({
+        Container: "speedtest",
+        Download: true,
+        Upload: true,
+        Ping: true,
+        Jitter: true
+    });
+});
+</script>
+
+</body>
+</html>
