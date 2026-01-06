@@ -28,7 +28,11 @@ button:disabled {
 }
 #result {
     margin-top: 25px;
-    font-size: 22px;
+    font-size: 20px;
+}
+.big {
+    font-size: 34px;
+    font-weight: bold;
 }
 </style>
 </head>
@@ -37,41 +41,73 @@ button:disabled {
 
 <h1>Internet Speed Test</h1>
 <button id="btn" onclick="startTest()">Start Test</button>
+
 <div id="result"></div>
 
 <script>
+async function testPing() {
+    const start = performance.now();
+    await fetch("https://speed.cloudflare.com/__down?bytes=1&x=" + Math.random(), {
+        cache: "no-store"
+    });
+    return Math.round(performance.now() - start);
+}
+
+async function testDownload() {
+    const start = performance.now();
+    const res = await fetch("https://speed.cloudflare.com/__down?bytes=8000000&x=" + Math.random(), {
+        cache: "no-store"
+    });
+    const data = await res.arrayBuffer();
+    const end = performance.now();
+
+    const seconds = (end - start) / 1000;
+    const bits = data.byteLength * 8;
+    return (bits / seconds / 1_000_000);
+}
+
+async function testUpload() {
+    const size = 4 * 1024 * 1024; // 4MB
+    const buffer = new Uint8Array(size);
+    const start = performance.now();
+
+    await fetch("https://speed.cloudflare.com/__up", {
+        method: "POST",
+        body: buffer,
+        headers: { "Content-Type": "application/octet-stream" }
+    });
+
+    const end = performance.now();
+    const seconds = (end - start) / 1000;
+    const bits = size * 8;
+    return (bits / seconds / 1_000_000);
+}
+
 async function startTest() {
     const btn = document.getElementById("btn");
     const result = document.getElementById("result");
-
     btn.disabled = true;
-    result.innerText = "Testing download speed...";
 
-    const testURL = "https://speed.cloudflare.com/__down?bytes=8000000"; // 8MB
-    const startTime = performance.now();
+    result.innerHTML = "Testing ping...";
+    const ping = await testPing();
+    result.innerHTML = `Ping: ${ping} ms<br><br>Testing download...`;
 
-    try {
-        const response = await fetch(testURL + "&cache=" + Math.random(), {
-            cache: "no-store"
-        });
+    const down = await testDownload();
+    result.innerHTML = `
+        Ping: ${ping} ms<br><br>
+        <b>Download Speed</b><br>
+        <div class="big">${down.toFixed(2)} Mbps</div><br>
+        Testing upload...
+    `;
 
-        const data = await response.arrayBuffer();
-        const endTime = performance.now();
+    const up = await testUpload();
 
-        const duration = (endTime - startTime) / 1000;
-        const bits = data.byteLength * 8;
-        const speedMbps = (bits / duration / 1_000_000).toFixed(2);
-
-        result.innerHTML = `
-            <p><b>Download Speed</b></p>
-            <p style="font-size:32px">${speedMbps} Mbps</p>
-            <p>Upload Speed: N/A</p>
-            <p>Ping: N/A</p>
-        `;
-    } catch (err) {
-        result.innerText = "Speed test failed. Network blocked.";
-        console.error(err);
-    }
+    result.innerHTML = `
+        Ping: ${ping} ms<br><br>
+        <b>Download Speed</b><br>
+        <div class="big">${down.toFixed(2)} Mbps</div><br><br>
+        Upload Speed: ${up.toFixed(2)} Mbps
+    `;
 
     btn.disabled = false;
 }
